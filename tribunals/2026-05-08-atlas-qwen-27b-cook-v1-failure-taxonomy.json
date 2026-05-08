@@ -1,0 +1,225 @@
+{
+  "schema_version": "1.0",
+  "tribunal_id": "cook-v1-atlas-qwen-27b-2026-05-08",
+  "cook": {
+    "model_id": "atlas-qwen-27b-v1",
+    "base_model": "qwen3.6-27b",
+    "corpus": "block-1-v4",
+    "corpus_pair_count": 244725,
+    "sealed_date": "2026-05-08",
+    "verdict": "do-not-promote-to-ic-draft-ready",
+    "classification": "jelly-propolis",
+    "deployment_tier": "internal-analyst-assist-only"
+  },
+
+  "critical_failures": [
+    "missed_day_one_interest_coverage",
+    "weaker_reconciliation_reflex",
+    "over_promoted_by_lenient_rubric",
+    "curator_undersized_for_final_audit"
+  ],
+
+  "repair_blocks": [
+    "reconciliation_pairs",
+    "bridge_refi_pairs",
+    "verdict_trigger_pairs",
+    "stnl_anti_hallucination_pairs",
+    "mortgage_constant_pairs",
+    "loi_binding_section_pairs"
+  ],
+
+  "failure_detail": {
+    "missed_day_one_interest_coverage": {
+      "description": "Cooked model failed to surface going-in interest coverage <1.0x on bridge-financed value-add deals where T12 NOI < annual IO interest.",
+      "observed_in": [
+        "memphis-312-easier-variant"
+      ],
+      "base_caught_it": true,
+      "cooked_caught_it": false,
+      "verdict_implication": "Should be KILL · cooked deferred to NMD",
+      "severity": "critical",
+      "repair_block": "bridge_refi_pairs",
+      "repair_pair_target": 3000,
+      "verification_method": "v2 cook must catch 0.85x going-in coverage trap on Memphis 312 prompt without prompt-level hand-holding"
+    },
+
+    "weaker_reconciliation_reflex": {
+      "description": "Cooked model accepted seller pro forma NOI at face value where line items did not reconcile. Base reconstructed NOI from primitives and surfaced the contradiction.",
+      "observed_in": [
+        "200-unit-mf-screen",
+        "248-mf-capital-markets",
+        "180-unit-waterfall"
+      ],
+      "base_caught_it": true,
+      "cooked_caught_it": false,
+      "examples": {
+        "200_unit_mf": "Line-item opex sum + vacancy + bad debt reconstructed NOI ~$858K · seller stated $1.995M · $1.14M hole",
+        "capital_markets_248": "Cooked subtracted hypothetical new refi loan from exit value · base subtracted existing debt balance (correct)",
+        "waterfall_180": "Cooked listed metrics to recalculate · base ran the actual waterfall and surfaced LP pref shortfall in year 1"
+      },
+      "severity": "critical",
+      "repair_block": "reconciliation_pairs",
+      "repair_pair_target": 15000,
+      "verification_method": "v2 cook must reconstruct NOI from line items on every multifamily prompt where opex is provided · refuse to accept stated NOI without reconciliation"
+    },
+
+    "over_promoted_by_lenient_rubric": {
+      "description": "Stage 5 lenient 1-10 rubric scored Cook v1 7-of-7 PROMOTE with means 8.71/9.43/9.0/8.71. Phase 2 strict 1-5 rubric scored same model 0-of-9 clean Accept with IC Readiness mean 2.57/5. Same model · different calibration · opposite reads.",
+      "root_cause": "Stage 5 rubric was calibrated to model performance, not institutional standards. Cook v1 success metrics were vibes, not deltas.",
+      "fix": "All future cooks must use Phase 2 v3 strict rubric (1-10 scale per Donovan correction · with sharp tier definitions) AND base-vs-trained delta as binding signal. No cook ships on rubric scores alone.",
+      "severity": "critical",
+      "repair_block": "verdict_trigger_pairs",
+      "repair_pair_target": 3000,
+      "verification_method": "v2 evaluation harness uses Phase 2 v3 rubric exclusively · base-vs-trained delta required for every prompt"
+    },
+
+    "curator_undersized_for_final_audit": {
+      "description": "SwarmCurator-9B audited 7 cooked Atlas outputs in detail. 1 of 7 audits cleanly correct. Failure modes included fabricating math errors, prompt-fact-as-unsupported confusion, missing real Atlas errors, and recommending changes that contradicted prompt specifications.",
+      "structural_issue": "9B model cannot reliably audit 27B institutional output · parity mismatch is not a calibration problem, it is a capability problem.",
+      "fix_short_term": "Use base Qwen3.6-27B with Curator institutional QC system prompt as the auditor (parity-class without cook investment).",
+      "fix_long_term": "Cook Curator-27B from Block-2 corpus + audit-specific overlay once Block-2 corpus design is complete.",
+      "severity": "critical",
+      "repair_block": "(infrastructure · not a corpus-pair repair block)",
+      "verification_method": "Parity-class Curator must achieve >70% audit accuracy on canary set before standalone deployment"
+    }
+  },
+
+  "repair_block_detail": {
+    "reconciliation_pairs": {
+      "description": "Force model to reconstruct NOI from primitive line items (opex + bad debt + vacancy + GPI) and flag contradictions with stated NOI.",
+      "pair_target_count": 15000,
+      "pair_pattern": {
+        "input": "Multifamily deal facts including: rent · occupancy · GPI · opex line items · bad debt · concessions · stated T12 NOI",
+        "expected_output": "Computed NOI from primitives · comparison to stated NOI · explicit contradiction flag if gap exceeds 5%",
+        "failure_if": "Model accepts stated NOI without reconstruction"
+      },
+      "asset_classes": ["multifamily", "retail", "office"],
+      "binding_failure_test": "Cook v2 must catch the 200-unit MF $1.14M reconciliation gap"
+    },
+
+    "bridge_refi_pairs": {
+      "description": "Force model to compute Day-1 interest coverage on bridge debt (T12 NOI / annual IO interest) AND amortizing DSCR for refi exit AND multi-scenario sensitivity.",
+      "pair_target_count": 3000,
+      "pair_pattern": {
+        "input": "Bridge-financed value-add deal: T12 NOI · LTC % · interest rate · IO term · amort term · exit assumption",
+        "expected_output": "Going-in interest coverage · IO DSCR · amortizing DSCR · refi loan size at LTV × stabilized value · multi-scenario exit cap sensitivity",
+        "failure_if": "Model only computes IO DSCR or only stabilized DSCR · ignores Day-1 trap"
+      },
+      "asset_classes": ["multifamily", "retail", "industrial"],
+      "binding_failure_test": "Cook v2 must catch Memphis 312 going-in 0.85x interest coverage trap"
+    },
+
+    "verdict_trigger_pairs": {
+      "description": "Lock evidence-to-verdict mapping. When math + analysis support firm verdict (KILL/REPRICE/APPROVE), commit to it. Soft NMD only when documents are truly missing.",
+      "pair_target_count": 3000,
+      "pair_pattern": {
+        "input": "Deal with structural issue (Day-1 trap · negative leverage · failed DSCR · etc) AND data gap (missing rent study · etc)",
+        "expected_output": "Firm verdict on structural issue · NMD only for data gap that could change structural conclusion · no soft NMD when math is conclusive",
+        "failure_if": "Model picks NMD when evidence supports KILL/REPRICE · model drifts between verdicts in same response"
+      },
+      "verdict_enum": ["Approve", "Approve with Conditions", "Reprice", "Needs More Data", "Kill"],
+      "binding_failure_test": "Cook v2 must commit KILL on Memphis 312 easier variant · not soft NMD"
+    },
+
+    "stnl_anti_hallucination_pairs": {
+      "description": "Lock the 'do not invent tenant credit facts' rule for STNL named-brand prompts. Refuse to cite specific S&P/Moody's ratings unless prompt provides them or prompt frames as verification request.",
+      "pair_target_count": 5000,
+      "pair_pattern": {
+        "input": "STNL deal facts naming specific brand (Starbucks · Walgreens · DG · CFA · Tractor Supply · etc) · asks to evaluate credit",
+        "expected_output": "Refuse to cite specific credit ratings without source · recommend obtaining current S&P/Moody's rating during DD · qualitative framing only ('investment-grade' acceptable; specific 'BBB+' invented and forbidden)",
+        "failure_if": "Model cites specific BBB+/A-/Baa1 ratings invented from training data"
+      },
+      "named_brands_observed_violating": ["Starbucks", "Walgreens", "Dollar General", "Chick-fil-A"],
+      "compliance_pattern_to_train": "Verification-framed prompts that DID produce compliant output (where base correctly refused)",
+      "binding_failure_test": "Cook v2 must refuse to cite specific credit ratings on 7 named-brand STNL prompts where Cook v1 violated"
+    },
+
+    "mortgage_constant_pairs": {
+      "description": "Lock multi-step mortgage P&I formula precision across common rate × amortization combinations.",
+      "pair_target_count": 3000,
+      "pair_pattern": {
+        "input": "Loan amount · interest rate · amortization term · IO period if applicable",
+        "expected_output": "Monthly P&I to within 0.5% of exact · annual debt service to within 0.5% · DSCR computation correct to 2 decimal places",
+        "failure_if": "Mortgage constant precision off by >2%"
+      },
+      "common_combinations_to_lock": [
+        "6.00% / 25yr · constant 7.74%",
+        "6.50% / 25yr · constant 8.10%",
+        "7.00% / 25yr · constant 8.46%",
+        "6.50% / 30yr · constant 7.59%",
+        "7.00% / 30yr · constant 7.99%",
+        "7.50% / 30yr · constant 8.39%"
+      ],
+      "production_recommendation": "Even with corpus training, route verdict-driving DSCR math to deterministic Python tool. Do not trust either base or trained model alone.",
+      "binding_failure_test": "Cook v2 must produce mortgage P&I within 1% of exact across 6 standard rate × term combinations"
+    },
+
+    "loi_binding_section_pairs": {
+      "description": "Lock LOI binding-section discipline. Standard binding survivors: Confidentiality · Exclusivity/No-Shop · Expenses · Governing Law (if included) · Access. Conditions to Closing is NOT a binding LOI provision.",
+      "pair_target_count": 5000,
+      "pair_pattern": {
+        "input": "LOI drafting prompt with deal facts · system prompt naming binding survivors",
+        "expected_output": "Section enumerating binding sections that includes ONLY the named survivors · excludes Conditions to Closing · includes Governing Law section · operations covenant always present · cross-references match actual section numbers · no ROFR overreach beyond exclusivity",
+        "failure_if": "Conditions to Closing listed as binding · OR Governing Law missing · OR cross-references don't match · OR ROFR added without prompt request"
+      },
+      "cook_v1_loi_errors_observed": {
+        "loi_memphis": "Section 19 Conditions to Closing listed as binding · Governing Law missing",
+        "loi_industrial": "Section 1 Confidentiality cross-reference bug · ROFR overreach",
+        "loi_office": "Exclusivity not listed as binding · SNDA review missing from DD list",
+        "loi_reprice": "Clean (one positive case)"
+      },
+      "binding_failure_test": "Cook v2 must produce 4 LOI drafts (Memphis · Reprice · Industrial · Office) all with correct binding-sections list AND Governing Law present AND no cross-reference bugs AND no ROFR overreach"
+    }
+  },
+
+  "block_2_corpus_summary": {
+    "specialized_pairs_total": 34000,
+    "block_1_v4_carry_forward_capped_at_30_percent": 73000,
+    "block_2_target_total": 107000,
+    "block_2_vs_block_1_v4_size_ratio": 0.44,
+    "rationale": "Cook v1 proved that 244K generic narrative pairs is not the bottleneck. Block-2 trades volume for targeting. Each pair has explicit failure_source + repair_goal metadata per Tribunal Before Training doctrine."
+  },
+
+  "deployment_decision": {
+    "trained_atlas_qwen_27b_v1": {
+      "tier": "internal-analyst-assist-only",
+      "use_for": [
+        "IC memo drafts (with senior-hack final review)",
+        "Cap rate / price-per-unit / TPC calculations",
+        "Standard CRE risk category enumeration",
+        "5-verdict enum compliance"
+      ],
+      "do_not_use_for": [
+        "Customer-facing IC memos without senior-hack review",
+        "Day-1 debt feasibility analysis",
+        "STNL credit assessment (hallucinates ratings)",
+        "Standalone deployment without Curator validator",
+        "Production LOI drafting (variance)"
+      ]
+    },
+    "recommended_production_stack": {
+      "atlas_layer": "Base Qwen3.6-27B + v4 system prompt + temperature 0.0 deterministic + verification framing on STNL",
+      "validator_layer": "Base Qwen3.6-27B with Curator institutional QC system prompt (parity-class without cook investment)",
+      "math_layer": "Deterministic Python tool for all verdict-driving math",
+      "human_layer": "Senior hack final review on every customer-facing output"
+    }
+  },
+
+  "tribunal_sequence_compliance": {
+    "stage_1_base_eval": "complete",
+    "stage_2_targeted_repair_design": "NOT_DONE_for_cook_v1",
+    "stage_3_cook": "complete",
+    "stage_4_trained_eval": "complete",
+    "stage_5_curator_audit": "complete_with_undersized_curator_caveat",
+    "stage_6_tribunal_seal": "this_artifact",
+    "stage_7_delta_report": "reports/atlas27b_qwen36_dev_eval_report.md",
+    "procedural_failure": "Stage 2 was skipped on Cook v1. Cook v2 will not enter Stage 3 until Stage 1 + Stage 2 are complete with senior-hack sign-off."
+  },
+
+  "sealed_by": {
+    "name": "Donovan Mackey",
+    "role": "Founder · Senior Hack",
+    "timestamp": "2026-05-08T16:30:00Z",
+    "doctrine_authority": "doctrine/tribunal-before-training.md"
+  }
+}

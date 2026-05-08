@@ -25,6 +25,12 @@ The corpus, the discipline, the receipts. What's actually in Atlas-9B v1 (produc
 
 ---
 
+## Sister directories
+
+Sealed Tribunal Verdicts (per the Tribunal Before Training doctrine) live in [`tribunals/`](../tribunals/README.md). Doctrine is the operating rule; the verdict is the specific ruling against a specific cook. Both must reference each other.
+
+---
+
 ## Adding new doctrine
 
 Doctrine entries get sealed when:

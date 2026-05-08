@@ -178,6 +178,13 @@ Active doctrine:
 - [Tribunal Before Training](./doctrine/tribunal-before-training.md) — base eval comes before cook · trained model proves itself against base · Curator audits · Tribunal seals · no shortcuts
 - [Atlas Quality Stack](./doctrine/atlas-quality-stack.md) — what's actually in the model · the corpus, the discipline, the receipts
 
+## Tribunal Verdicts
+
+Sealed cook rulings live in [`tribunals/`](./tribunals/README.md). Each cook produces a formal verdict at Stage 6 of the Tribunal Sequence — classifying the model, routing outputs to Royal Jelly tiers, and identifying repair blocks for the next cook.
+
+Active verdicts:
+- [Atlas 27B Qwen 3.6 Cook v1](./tribunals/2026-05-08-atlas-qwen-27b-cook-v1.md) · 2026-05-08 · **Jelly/Propolis** · do not promote · feed failures to Block-2 repair corpus
+
 ---
 
 ## Iconic line
