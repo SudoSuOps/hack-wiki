@@ -170,6 +170,16 @@ Or hit the served query endpoint (when wired):
 
 ---
 
+## Operating doctrine
+
+Sealed lessons live in [`doctrine/`](./doctrine/README.md). Each entry is operational canon — the lesson cost real GPU hours, real broker time, or real LP capital to learn, then was captured here so it does not have to be re-paid.
+
+Active doctrine:
+- [Tribunal Before Training](./doctrine/tribunal-before-training.md) — base eval comes before cook · trained model proves itself against base · Curator audits · Tribunal seals · no shortcuts
+- [Atlas Quality Stack](./doctrine/atlas-quality-stack.md) — what's actually in the model · the corpus, the discipline, the receipts
+
+---
+
 ## Iconic line
 
 > *"The wiki is the firm's institutional memory.*
