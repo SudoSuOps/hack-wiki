@@ -1,0 +1,175 @@
+{
+  "report_date": "2026-05-08",
+  "models": {
+    "base": {
+      "name": "Qwen3.6-27B (base)",
+      "path": "/data2/qwen-3.6-27b/",
+      "params_billions": 26.9,
+      "inference": "transformers AutoModelForCausalLM bf16"
+    },
+    "trained": {
+      "name": "Atlas-Qwen-27B v1",
+      "path": "/data1/atlas-qwen-27b-v4/merged/",
+      "params_billions": 26.9,
+      "cook_recipe": "Gold Standard · LoRA r=64 alpha=32 · LR 1e-5 · 30% epoch fraction · bf16 · 244K Block-1-v4 corpus",
+      "cook_duration_hours": 29.47,
+      "final_eval_loss": 0.4540,
+      "final_token_accuracy": 0.8641
+    }
+  },
+  "stage5_cooked_v2_rubric": {
+    "source_file": "/data1/atlas-curator-eval/atlas-qwen-27b-v1-stage5.jsonl",
+    "rubric": "1-10 lenient (doctrine · numeric_discipline · framing · judgment)",
+    "prompts_count": 7,
+    "verdict_distribution": {
+      "PROMOTE": 7,
+      "HOLD": 0,
+      "PIT": 0,
+      "FIRED": 0
+    },
+    "scorecard_means": {
+      "doctrine_score": 8.71,
+      "numeric_discipline": 9.43,
+      "framing": 9.0,
+      "judgment": 8.71
+    },
+    "interpretation": "Lenient rubric · 7/7 PROMOTE · this was the rubric used to greenlight the Atlas v1 cook landing"
+  },
+  "phase2_cooked_v3_rubric": {
+    "source_file": "/data1/atlas-curator-eval/sessions/atlas-eval-2026-05-08T094147.jsonl",
+    "report_file": "/data1/atlas-curator-eval/reports/phase2-eval-report-2026-05-08T100714.md",
+    "rubric": "1-5 strict (Accuracy · Grounding · Underwriting Discipline · Risk Awareness · IC Readiness)",
+    "prompts_count": 9,
+    "atlas_verdict_distribution": {
+      "Kill": 2,
+      "Reprice": 1,
+      "Needs More Data": 1,
+      "Approve with Conditions": 2,
+      "Approve": 1,
+      "unparsed": 2
+    },
+    "curator_decision_distribution": {
+      "Accept": 0,
+      "Accept with Revisions": 9,
+      "Reject": 0
+    },
+    "scorecard_means_n7": {
+      "Accuracy": 3.57,
+      "Grounding": 2.71,
+      "Underwriting Discipline": 2.29,
+      "Risk Awareness": 3.29,
+      "IC Readiness": 2.57
+    },
+    "royal_jelly_routing": {
+      "APEX_5_5": 0,
+      "HONEY_4_5": 0,
+      "JELLY_3_5": 4,
+      "POLLEN_2_5": 3,
+      "PROPOLIS_1_5": 0,
+      "unrouted_truncated": 2
+    },
+    "interpretation": "Strict rubric · 0/9 clean Accept · same model that scored 7/7 PROMOTE on Stage 5 v2 rubric scored 0/9 clean Accept on Phase 2 v3 rubric"
+  },
+  "phase2_base_qualitative": {
+    "source_file": "/data1/atlas-curator-eval/sessions/atlas-eval-2026-05-08T112840.jsonl",
+    "rubric": "qualitative senior-hack review (no Curator grades captured)",
+    "prompts_count": 40,
+    "curator_grades_captured": 0,
+    "categories_run": [
+      "multifamily underwriting (8)",
+      "Memphis 312-unit (2 variants)",
+      "industrial flex (2)",
+      "retail strip (1)",
+      "self-storage (1)",
+      "capital markets (1)",
+      "waterfall (1)",
+      "hedge fund opportunistic (1)",
+      "LOI drafting (4)",
+      "STNL retail (8)",
+      "lease abstract checklists (2)",
+      "grocery-anchored (8)",
+      "renovation plan (1)",
+      "sell-vs-refi-vs-hold (1)"
+    ],
+    "interpretation": "Base ran 40 prompts with senior-hack qualitative review only · structured Curator grading not captured · recommend re-run with Curator validation for direct quantitative comparison"
+  },
+  "direct_comparison_10_overlap": {
+    "method": "qualitative senior-hack reading of both base and cooked outputs on 10 overlapping Phase 2 prompts",
+    "winner_distribution": {
+      "BASE": 6,
+      "COOKED": 2,
+      "TIE": 1,
+      "untested_overlap": 1
+    },
+    "base_wins_on": [
+      "Capital Markets 248-MF correct exit math",
+      "Waterfall 180-unit ran the calc vs cooked skipped",
+      "200-unit MF caught $1.14M reconciliation contradiction",
+      "Memphis 312 easier caught Day-1 trap vs cooked deferred",
+      "LOI Memphis correct binding sections + Governing Law",
+      "LOI Industrial avoided cross-reference + ROFR errors",
+      "Hedge Fund three-strategy framework"
+    ],
+    "cooked_wins_on": [
+      "Price Analysis 146-MF three-method synthesis discipline",
+      "LOI Reprice institutional embellishments (MAC + mediation)"
+    ],
+    "tie_on": [
+      "Memphis 312 harder both caught Day-1 trap"
+    ]
+  },
+  "curator_9b_audit_accuracy": {
+    "audits_reviewed_in_detail": 7,
+    "cleanly_correct": 1,
+    "cleanly_correct_pct": 14,
+    "fabricated_math_errors": 3,
+    "prompt_fact_misclassified_as_unsupported": 5,
+    "missed_real_atlas_errors": 4,
+    "recommendations_contradicted_prompt_spec": 1,
+    "interpretation": "Curator-9B is structurally undersized for institutional 27B audit · need parity-class auditor (Curator-27B or base-as-Curator)"
+  },
+  "shared_failure_modes": {
+    "stnl_credit_rating_hallucination": {
+      "prompts_violated": 7,
+      "prompts_compliant": 1,
+      "compliant_when": "verification-framed prompt (What's Known / What's Not Known)",
+      "fix": "v4 system prompt with mandatory verification preamble"
+    },
+    "math_precision_slip": {
+      "typical_25yr_amort_off": "5-10%",
+      "catastrophic_outlier": "73% off on weak-anchor prompt (1 instance)",
+      "bad_debt_percent_off": "4x on rent-roll prompt (1 instance)",
+      "fix": "deterministic Python tool for verdict-driving math"
+    },
+    "verdict_drift_across_runs": {
+      "instances": 2,
+      "most_critical": "Memphis 312 harder · KILL/HIGH on first base run · NMD/LOW on second base run",
+      "fix": "temperature 0.0 deterministic sampling for production"
+    }
+  },
+  "production_readiness": {
+    "trained_atlas_v1": "Internal Analyst Assist Ready (with senior-hack final review)",
+    "base_qwen36_27b": "Internal Analyst Assist Ready (recommended primary deploy path)",
+    "ic_draft_ready": false,
+    "client_facing_ready": false,
+    "blockers_to_ic_draft": [
+      "Day-1 debt feasibility miss on cooked Memphis 312 easier",
+      "STNL credit rating hallucination shared across both models",
+      "Mortgage constant precision wobble",
+      "Verdict drift across runs",
+      "No structured Curator grades on base · cannot quantitatively confirm parity"
+    ]
+  },
+  "v2_corpus_priorities_locked": {
+    "reconciliation_pairs": 15000,
+    "multi_scenario_sensitivity_pairs": 10000,
+    "stnl_anti_hallucination_pairs": 5000,
+    "verdict_trigger_discipline_pairs": 3000,
+    "mortgage_constant_precision_pairs": 3000,
+    "cap_rate_vocabulary_pairs": 2000,
+    "loi_binding_section_discipline_pairs": 5000,
+    "operations_covenant_always_pairs": 2000,
+    "exit_math_sale_vs_refi_pairs": 3000,
+    "total_specialized": 48000
+  }
+}
